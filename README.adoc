@@ -12,6 +12,14 @@
 :toc:
 :toclevels: 5
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 == ChangeLog
 
 IMPORTANT: Until this package has stabilised and until it has reached a 1.0.0
@@ -24,6 +32,10 @@ WARNING: Read the warning above.
 
 |===
 |Version | Note
+
+| *0.4.10*
+a|
+* Improved documentation. No functional changes.
 
 | *0.4.1*
 a|
@@ -106,9 +118,71 @@ Please refer to your favourite package manager's documentation in learn how to
 install it for you 😄
 
 NOTE: Obviously, you must also install Wireguard! Choose either manual
-installation (using git and compiling it yourself), or using `wireguard-arch`
-or `wireguard-dkms`. Life is short, so personally I just roll with
-`wireguard-arch`. Seems to work OOTB for me, but YMMV...
+installation (using git and compiling it yourself), or using
+`wireguard-tools`. Life is short, so personally I just roll with
+`wireguard-tools`.
+
+== Additional Requirements
+
+This software requires a few necessary additions:
+
+* `mkinitcpio-utils`
+* `mkinitcpio-netconf`
+
+These packages provide the means to configure the network interface
+via passed in kernel parameters and the ability to ssh to the machine
+remotely. Basic instructions follow:
+
+You will need to choose been `mkinitcpio-tinyssh` or
+`mkinitcpio-dropbear` and install one or the other. This documentation
+describes only `mkinitcpio-tinyssh` as it supports ed25519 and I quite
+like it.
+
+* `mkinitcpio-tinyssh`
+* `mkinitcpio-dropbear`
+
+=== mkinitcpio-utils
+
+This package configures `encryptssh` to perform remote unlocking. It
+works with both `mkinitcpio-tinyssh` and `mkinitcpio-dropbear`. See
+below on `Hook Installation` for the module ordering for
+`mkinitcpio.conf`
+
+=== mkinitcpio-netconf
+
+This package sets up the interfaces just immediately after booting the
+kernel based upon the IP parameters passed into the kernel via GRUB.
+This is very important as this sets thing up in order for tinyssh (or
+dropbear) and wireguard to function. For example, in your
+`/etc/default/grub` file, the `GRUB_CMDLINE_LINUX` line may look like
+this:
+
+```
+GRUB_CMDLINE_LINUX="cryptdevice=UUID=35fbb65a-eeb9-4a6a-7b13-a05d9b0fcf6f:cryptroot root=/dev/mapper/cryptroot ip=192.168.1.10:192.168.1.1:255.255.255.0::eth0::"
+```
+
+This says to use the cryptdevice defined by the UUID, which will map
+itself to `cryptoroot` after successful unlocking and also set the IP
+parameters on the kernel, i.e., host = 192.168.1.10, gateway =
+192.168.1.1, netmask = 255.255.255.0, and kernel network interface
+eth0.
+
+Further information on the ip kernel parameter can be found
+https://github.com/torvalds/linux/blob/master/Documentation/admin-guide/nfs/nfsroot.rst[here].
+
+IMPORTANT: Use the **kernel** device name, i.e., **eth0**, and not the
+well known predictable name, such as **enp0s31f6**.
+
+=== mkinitcpio-tinyssh (or mkinitcpio-dropbear)
+
+This package installs `tinyssh` to allow SSH connections. It's small
+enough to fit into the daemon into the early userspace and allows for
+the use of ed25519 keys (which are great!)
+
+The steps here are:
+
+. Create an ed25519 keypair using openssh, i.e., `ssh-keygen -t ed25519`
+. Copy the public key to `/etc/tinyssh/root_key`
 
 == Configuration
 

@@ -32,8 +32,8 @@ configured via the "/etc/wireguard/initcpio/unlock" file. This must be done!
 
 In addition to this hook, you will require something like tinyssh or dropbear
 appropriately configured in order to gain remote access. Please refer to the
-Arch Wiki for further details with regards to remote unlocking of encrypted
-partitions.
+README.adoc AND the Arch Wiki for further details with regards to remote
+unlocking of encrypted partitions.
 HELPME
 }
 
