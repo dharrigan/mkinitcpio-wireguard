@@ -19,6 +19,7 @@ build()
     add_dir /etc/wireguard/initcpio
 
     add_file $PRIVATE_KEYFILE
+    add_file $PRESHARED_KEYFILE
     add_file /etc/wireguard/initcpio/unlock
 
     add_runscript

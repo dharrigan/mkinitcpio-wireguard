@@ -51,7 +51,8 @@ run_hook()
         peer $PEER_PUBLIC_KEY \
         endpoint $PEER_ENDPOINT \
         persistent-keepalive $PERSISTENT_KEEPALIVES \
-        allowed-ips $ALLOWED_IPS
+        allowed-ips $ALLOWED_IPS \
+	preshared-key $PRESHARED_KEYFILE
     ip addr add $INTERFACE_ADDR dev $INTERFACE
     ip link set $INTERFACE up
     ip route add $ALLOWED_IPS dev $INTERFACE

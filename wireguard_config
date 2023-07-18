@@ -31,4 +31,7 @@ PERSISTENT_KEEPALIVES=25
 # The IP range that will be allowed.
 ALLOWED_IPS=10.0.200.0/24
 
+# This is your preshared key previously setup to establish connection to the peer.
+PRESHARED_KEYFILE=/etc/wireguard/initcpio/presharedkey
+
 # vim:set syntax=sh tw=78:
