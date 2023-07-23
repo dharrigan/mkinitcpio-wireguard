@@ -1,34 +1,65 @@
 #
-# Information pertaining to the Wireguard mkinitcpio hook
+# Information pertaining to the WireGuard mkinitcpio hook
 #
 # Please ensure you've read the documentation on how to setup and configure
-# Wireguard for your needs. It's vital that you ensure that you can connect
+# WireGuard for your needs. It's vital that you ensure that you can connect
 # successfully before working on enabling remote unlocking functionality.
 
-# All the values below are just examples. You must change them to suit
-# your Wireguard network setup.
+#
+# All the values below are just examples. You *MUST* change them to suit your
+# particular WireGuard network setup.
+#
 
-# Specifies the name of the Wireguard interface (usually wg0)
+#
+# Specifies the name of the WireGuard interface (usually wg0).
+#
 INTERFACE=wg0
 
-# Specifies the address that the Wireguard interface will use.
-# Please ensure you specify the address in CIDR format.
+#
+# Specifies the IP address that the WireGuard interface will use.
+#
+# Please ensure you specify the IP address in CIDR format.
+#
 INTERFACE_ADDR=10.0.200.21/32
 
-# This is the public key of the peer.
+#
+# This is the public key of the peer (usually the WireGuard server).
+#
 PEER_PUBLIC_KEY=abcdefg
 
-# This is the IP address and port of the peer.
-# Usually this is the external public-facing IP, but it may also be internal!
+#
+# This is normally the external public-facing IP address and port of the peer
+# (usually the WireGuard server), but it may also be an internal IP address
+# and port of a peer if you wish!
+#
 PEER_ENDPOINT=192.168.80.1:12912
 
-# This is your private key previously setup to establish connection to the peer.
+#
+# This is your private key previously setup to establish connection to the
+# peer (usually the WireGuard server).
+#
 PRIVATE_KEYFILE=/etc/wireguard/initcpio/privatekey
 
-# If you're behind a NAT, a ping of 25 seconds is useful!
+#
+# This is the preshared key to be used. Please uncomment it if you need to use
+# a preshared key between peers. Don't forget to populate the preshared
+# keyfile using something like:
+#
+# umask 077 && wg genpsk > /etc/wireguard/initcpio/presharedkey
+#
+# and that the preshared key matches configured on the other peer too!
+#
+#PRESHARED_KEYFILE=/etc/wireguard/initcpio/presharedkey
+
+#
+# If you're behind a NAT, a ping of 25 seconds is useful to keep the
+# connection alive between the peers.
+#
 PERSISTENT_KEEPALIVES=25
 
-# The IP range that will be allowed.
+#
+# The IP range that will be allowed to flow across the wg0 interface.
+#
 ALLOWED_IPS=10.0.200.0/24
 
 # vim:set syntax=sh tw=78:

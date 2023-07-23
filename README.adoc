@@ -1,4 +1,4 @@
-= mkinitcpio Wireguard hook
+= mkinitcpio WireGuard hook
 :author: David Harrigan
 :email: <dharrigan [@] gmail [dot] com>
 :docinfo: true
@@ -22,16 +22,34 @@ endif::[]
 
 == ChangeLog
 
-IMPORTANT: Until this package has stabilised and until it has reached a 1.0.0
-release, *please be very careful* to examine the version changes listed below
-as the package requirements and instructions can change to reflect a better
+[IMPORTANT]
+====
+This project follows the version scheme **MAJOR.MINOR.COMMITS** where
+**MAJOR** and **MINOR** provide some relative indication of the size of the
+change, but do **NOT** follow semantic versioning. In general, all changes
+endeavour to be non-breaking (by moving to new names rather than by breaking
+existing names). **COMMITS** is an ever-increasing counter of commits since
+the beginning of this repository.
+====
+
+[IMPORTANT]
+====
+Until this package has stabilised and until it has reached a 1.0.0 release,
+*please be very careful* to examine the version changes listed below as the
+package requirements and instructions can change to reflect a better
 understanding of the problem domain. *DO NOT ASSUME THAT ANYTHING UNTIL AT
 LEAST A 1.0.0 RELEASE*
-
-WARNING: Read the warning above.
+====
 
 |===
 |Version | Note
+
+| *0.5.11*
+a|
+* Added in support for using WireGuard a preshared key (closes #4).
+* Improved the documentation.
+* Improved the initcpio support files.
+* Change versioning to be MAJOR.MINOR.COMMITS.
 
 | *0.4.10*
 a|
@@ -63,49 +81,58 @@ a|
 
 == Rationale
 
-Firstly, encryption. Encrypt all the things.
+**Firstly**, encryption. **Encrypt all the things!**
 
-Secondly, I think https://www.wireguard.io[Wireguard] is pretty awesome. It's
+**Secondly**, I think https://www.wireguard.io[Wireguard] is pretty awesome. It's
 really easy to setup and use and works flawlessly (at least for me 😄).
 
-Thirdly, the ability to remotely unlock encrypted partitions is extremely
+**Thirdly**, the ability to remotely unlock encrypted partitions is extremely
 useful.  However, a limitation is that in order to remotely unlock the
 partition via SSH, you normally need to be on the same network (or at least
 routeable) to the computer that needs unlocking.
 
 As far as I could tell, there was nothing available in
-https://aur.archlinux.org[AUR] that provided a Wireguard hook for
-`mkinitcpio`. Creating a hook should allow a basic Wireguard interface to be
+https://aur.archlinux.org[AUR] that provided a WireGuard hook for
+`mkinitcpio`. Creating a hook should allow a basic WireGuard interface to be
 established so that - via a secure network - you could gain access to the
-remote machine. This is my small attempt to achieve that aim.
+remote computer. This is my small attempt to achieve that aim.
 
-IMPORTANT: I developed this little hook for myself and I'm releasing it into
+[IMPORTANT]
+====
+I developed this little hook for myself and I'm releasing it into
 the general community in the (probably misguided) hope that others may find it
 useful too. As usual, no warranty implied or otherwise is given towards the
 fitness of this software in meeting *YOUR* needs. Please refer to the included
 https://unlicense.org[Unlicense] license file for more information. That said,
 I find this little hook useful - perhaps you may too - so please enjoy! Oh,
 and please be be awesome to each other!
+====
 
-WARNING: Ensure you have read the Arch wiki section on
+[WARNING]
+====
+Ensure you have read the Arch wiki section on
 https://wiki.archlinux.org/index.php/Dm-crypt/Specialties#Remote_unlocking_of_the_root_(or_other)_partition[remote
 unlocking]. It's a *very* good idea to get remote unlocking working *first* on
 your local network - proving that it works for you (this includes using either
 *tinyssh* or *dropbear* to authenticate and unlock successfully)
-- *before* attempting to setup this mkinitcpio Wireguard hook for remote
+- *before* attempting to setup this mkinitcpio WireGuard hook for remote
 unlocking.
+====
 
-IMPORTANT: It is also *strongly* recommend that a *separate* Wireguard network
+[IMPORTANT]
+====
+It is also *strongly* recommend that a *separate* WireGuard network
 is setup and configured *just* for unlocking. You see, a private key (and a
 public key) and a configuration file are written to the ramdisk (which
 typically lives in an unencrypted boot partition). It's super trivially easy
 for anyone to copy this ramdisk, extract out the contents and use the private
-key and Wireguard configuration found therein to connect to your Wireguard
+key and WireGuard configuration found therein to connect to your WireGuard
 network. As a minimum, you could disable (on the remote peer *nominally called
-the `server`*) the ability for the target machine (the `client` - the one on
+the `server`*) the ability for the target computer (the `client` - the one on
 which you are remotely unlocking partitions) to connect and authenticate -
 only enabling connection *when* and *if* required. Please be careful and think
 this through! Safety first!
+====
 
 == OS Installation
 
@@ -117,10 +144,12 @@ https://github.com/Jguer/yay[yay] package manager to install the utility.
 Please refer to your favourite package manager's documentation in learn how to
 install it for you 😄
 
-NOTE: Obviously, you must also install Wireguard! Choose either manual
-installation (using git and compiling it yourself), or using
-`wireguard-tools`. Life is short, so personally I just roll with
-`wireguard-tools`.
+[NOTE]
+====
+Obviously, you must also install WireGuard! Choose either manual installation
+(using git and compiling it yourself), or using `wireguard-tools`. Life is
+short, so personally I just roll with `wireguard-tools`.
+====
 
 == Additional Requirements
 
@@ -129,14 +158,14 @@ This software requires a few necessary additions:
 * `mkinitcpio-utils`
 * `mkinitcpio-netconf`
 
-These packages provide the means to configure the network interface
-via passed in kernel parameters and the ability to ssh to the machine
-remotely. Basic instructions follow:
+These packages provide the means to configure the network interface via passed
+in kernel parameters and the ability to ssh to a remote computer. Basic
+instructions follow.
 
 You will need to choose been `mkinitcpio-tinyssh` or
 `mkinitcpio-dropbear` and install one or the other. This documentation
 describes only `mkinitcpio-tinyssh` as it supports ed25519 and I quite
-like it.
+like it (both ed25519 and tinyssh).
 
 * `mkinitcpio-tinyssh`
 * `mkinitcpio-dropbear`
@@ -153,25 +182,27 @@ below on `Hook Installation` for the module ordering for
 This package sets up the interfaces just immediately after booting the
 kernel based upon the IP parameters passed into the kernel via GRUB.
 This is very important as this sets thing up in order for tinyssh (or
-dropbear) and wireguard to function. For example, in your
+dropbear) and WireGuard to function. For example, in your
 `/etc/default/grub` file, the `GRUB_CMDLINE_LINUX` line may look like
 this:
 
 ```
-GRUB_CMDLINE_LINUX="cryptdevice=UUID=35fbb65a-eeb9-4a6a-7b13-a05d9b0fcf6f:cryptroot root=/dev/mapper/cryptroot ip=192.168.1.10:192.168.1.1:255.255.255.0::eth0::"
+GRUB_CMDLINE_LINUX="cryptdevice=UUID=35fbb65a-eeb9-4a6a-7b13-a05d9b0fcf6f:cryptroot root=/dev/mapper/cryptroot ip=192.168.1.10::192.168.1.1:255.255.255.0::eth0::"
 ```
 
-This says to use the cryptdevice defined by the UUID, which will map
-itself to `cryptoroot` after successful unlocking and also set the IP
-parameters on the kernel, i.e., host = 192.168.1.10, gateway =
-192.168.1.1, netmask = 255.255.255.0, and kernel network interface
-eth0.
+This says to use the cryptdevice defined by the UUID, which will map itself to
+`cryptoroot` after successful unlocking and also set the IP parameters on the
+kernel, i.e., `host=192.168.1.10`, `gateway=192.168.1.1`, `netmask =
+255.255.255.0`, and kernel network interface `eth0`.
 
 Further information on the ip kernel parameter can be found
 https://github.com/torvalds/linux/blob/master/Documentation/admin-guide/nfs/nfsroot.rst[here].
 
-IMPORTANT: Use the **kernel** device name, i.e., **eth0**, and not the
-well known predictable name, such as **enp0s31f6**.
+[WARNING]
+====
+Use the **kernel** device name, i.e., **eth0**, and not the well known
+predictable name, such as **enp0s31f6**.
+====
 
 === mkinitcpio-tinyssh (or mkinitcpio-dropbear)
 
@@ -179,23 +210,76 @@ This package installs `tinyssh` to allow SSH connections. It's small
 enough to fit into the daemon into the early userspace and allows for
 the use of ed25519 keys (which are great!)
 
-The steps here are:
+[TIP]
+====
+Please refer to the Arch wiki on
+https://wiki.archlinux.org/title/Dm-crypt/Specialties#Remote_unlocking_of_root_(or_other)_partition[remote
+unlocking] for additional background reading.
+====
 
-. Create an ed25519 keypair using openssh, i.e., `ssh-keygen -t ed25519`
-. Copy the public key to `/etc/tinyssh/root_key`
+[NOTE]
+====
+The following steps assume you are on the computer which is encrypted and you'll want to remote boot
+and that you are currently the `root` user.
+====
+
+The steps are:
+
+* Create an `ed25519` keypair using openssh, i.e., `ssh-keygen -t ed25519`
+
+[NOTE]
+====
+Any name will do, but we'll assume `server` as the keypair name (thus `server`
+and `server.pub` `ed25519` keyfiles are created)
+====
+
+* Copy the `server.pub` keyfile to `/etc/tinyssh/root_key` (file)
+* Remove the existing `/etc/tinyssh/sshkeydir` directory, i.e., `rm -rf /etc/tinyssh/sshkeydir`
+* Generate a tinyssh compatible private key using `tinyssh-convert /etc/tinyssh/sshkeydir < server`
+
+[NOTE]
+====
+The `server` file is the *private* `ed25519` keyfile that was generated a moment ago
+====
+
+* Don't forget to copy the `ed25519` private key to the local computer from which you want to ssh *from*!
+** i.e., copy the `server` private keyfile to your local computer, perhaps put it in your `$HOME/.ssh` directory
+* It may be useful to add an entry to your personal `$HOME/.ssh/config` along the lines of:
+
+----
+host server
+    hostname ip-address-of-the-remote-encrypted-computer-wireguard-interface
+    user root
+    IdentityFile ~/.ssh/ed25519_private_key_of_the_remote_encrypted_computer
+----
+
+For example, based upon the example `wireguard_config` file in this repository:
+
+----
+host server
+    hostname 10.0.200.21
+    user root
+    IdentityFile ~/.ssh/server
+----
 
 == Configuration
 
-IMPORTANT: The setup and running of `mkinitcpio-wireguard` is *very* basic and
-makes *lots* of assumptions. *This is intentional!* This hook is simple
-because it is designed to get a minimal Wireguard up and running so that you
-can remotely unlock encrypted partitions. The script does not attempt to do
-anything else. This script will never be super fancy or clever.
+[IMPORTANT]
+====
+The setup and running of `mkinitcpio-wireguard` is *very* basic and makes
+*lots* of assumptions. *This is intentional!* This hook is simple because it
+is designed to get a minimal WireGuard up and running so that you can remotely
+unlock encrypted partitions. The script does not attempt to do anything else.
+This script will never be super fancy or clever.
+====
 
-WARNING: Please read and familiarise yourself with how Wireguard works. In
-particular, please refer to the *numerous* examples online of how to setup and
-configure Wireguard. It is *strongly* suggested you get Wireguard up and
-running first. A few examples of where to find documentation are listed below:
+[WARNING]
+====
+Please read and familiarise yourself with how WireGuard works. In particular,
+please refer to the *numerous* examples online of how to setup and configure
+WireGuard. It is *strongly* suggested you get WireGuard up and running first.
+A few examples of where to find documentation are listed below.
+====
 
 * https://wiki.archlinux.org/index.php/WireGuard
 * https://www.wireguard.com/quickstart/
@@ -203,24 +287,58 @@ running first. A few examples of where to find documentation are listed below:
 
 After installing `mkinitcpio-wireguard`, an example configuration file will be
 written to `/etc/wireguard/initcpio/unlock`. You *MUST* edit this file to suit
-your particular Wireguard requirements. The file is really simple and
+your particular WireGuard requirements. The file is really simple and
 therefore should be pretty self-explanatory.
 
-NOTE: If you have an existing `wg0.conf` in your `/etc/wireguard` directory,
+[NOTE]
+====
+If you have an existing `wg0.conf` in your `/etc/wireguard` directory,
 you can use the contents of that file as a reference. Please be aware of the
 warning above concerning the recommended use of a separate network for remote
 unlocking.
+====
+
+=== Configuration Keys
+
+The current configuration keys found in the configuration file are:
+
+|===
+|Key | Description
+
+|**INTERFACE**| Specifies the name of the WireGuard interface (usually wg0).
+|**INTERFACE_ADDR**|Specifies the IP address that the WireGuard interface will use. Please ensure you specify the IP address in CIDR format.
+|**PEER_PUBLIC_KEY**|This is the public key of the peer (usually the WireGuard server).
+|**PEER_ENDPOINT**|This is normally the external public-facing IP address and port of the peer (usually the WireGuard server), but it may also be an internal IP address and port of a peer if you wish!
+|**PRIVATE_KEYFILE**|This is your private key previously setup to establish connection to the peer (usually the WireGuard server).
+|**PRESHARED_KEYFILE**|**OPTIONAL**
+This is the preshared key to be used. Don't forget to populate the preshared
+keyfile using something like:
+
+`umask 077 && wg genpsk > /etc/wireguard/initcpio/presharedkey`
+
+and that the preshared key matches on the other peer too!
+|**PERSISTENT_KEEPALIVES**|If you're behind a NAT, a ping of 25 seconds is useful to keep the connection alive between the peers.
+|**ALLOWED_IPS**|The IP range that will be allowed to flow across the wg0 interface.
+
+|===
 
 == Hook Installation
 
 After you have edited the `/etc/wireguard/initcpio/unlock` file to suit your
-needs, ensure that you've added the `wireguard` hook to the *HOOKS* array of
-`/etc/mkinitcpio.conf`. Shown below is an example that also includes the use
-of `netconf`, `tinyssh` and `encryptssh`.
+needs, the next step is ensure that you've added the `wireguard` hook to the
+*HOOKS* array of `/etc/mkinitcpio.conf`. Shown below is an example that also
+includes the use of `netconf`, `tinyssh` and `encryptssh`
 
 ----
 HOOKS=(base udev autodetect keyboard keymap modconf block netconf wireguard tinyssh encryptssh filesystems fsck)
 ----
+
+[NOTE]
+====
+Your particular original `/etc/mkinitcpio.conf` file may be slightly different
+in the hooks already present (and the ordering in which they are presented).
+====
+
 
 == Final Steps
 
@@ -230,17 +348,31 @@ Lastly, run (still as root):
 mkinitcpio -P
 ----
 
-This will regenerate the ramdisk with your Wireguard configuration.
+This will regenerate the initramfs ramdisk with your WireGuard configuration.
+You can safely ignore all the warnings about possibly missing firmware
+modules.
 
-You should now be able to reboot your machine and after the interface has come
-up be able to ping it via your Wireguard network! You should now also be able
-to SSH to the machine (you did remember to set that all up before doing this,
-right?) and unlock any encrypted partitions and thus enable the continuation
-of your boot process! FTW!
+You should now be able to reboot your remote computer and after the interface
+has come up be able to ping it via your WireGuard network!
 
-NOTE: It could take a minute or two for your Wireguard interface to
+NOTE: It could take a minute or two for your WireGuard interface to
 authenticate and be recognised by the remote peer. Please be patient and hang
 on in there!
+
+Once you can ping the remote computer, you should now also be able to SSH to
+it (you did remember to set that all up before doing this, right?).
+
+After establishing a SSH connection to the remote computer, a prompt should
+appear asking for the LUKS passphrase to unlock the encrypted partition. Once
+the LUKS passphrase has been keyed in, the partition should unlock and the
+continuation of the boot process will continue! FTW!
+
+== Updating the configuration
+
+If you make changes to the `/etc/wireguard/initcpio/unlock` file, or if you
+change your private key (and/or optionally the preshared key) don't forget to
+regenerate the initramfs ramdisk using `mkinitcpio -P`, otherwise your new
+settings won't be picked up!
 
 == Unlicensed
 

@@ -2,13 +2,17 @@
 
 build()
 {
-    if [ ! -s /etc/wireguard/initcpio/unlock ]; then
-        error "Missing Wireguard initcpio hook unlock configuration file! Exiting!"
+    if [[ ! -s /etc/wireguard/initcpio/unlock ]]; then
+        error "Missing WireGuard initcpio hook unlock configuration file '/etc/wireguard/initcpio/unlock'! WireGuard not configured correctly!"
         return 1
     else
         . /etc/wireguard/initcpio/unlock
-        if [ ! -s $PRIVATE_KEYFILE ]; then
-            error "Missing Wireguard initcpio hook Private Keyfile! Exiting!"
+        if [[ ! -s $PRIVATE_KEYFILE ]]; then
+            error "Missing WireGuard initcpio hook private keyfile '$PRIVATE_KEYFILE'! WireGuard not configured correctly!"
+            return 1
+        fi
+        if [[ -n $PRESHARED_KEYFILE && ! -s $PRESHARED_KEYFILE ]]; then
+            error "Missing WireGuard initcpio hook preshared keyfile '$PRESHARED_KEYFILE'! WireGuard not configured correctly!"
             return 1
         fi
     fi
@@ -18,23 +22,34 @@ build()
 
     add_dir /etc/wireguard/initcpio
 
+    #
+    # The $PRIVATE_KEYFILE *MUST* exist.
+    #
     add_file $PRIVATE_KEYFILE
+
+    #
+    # The PRESHARED_KEYFILE *MAY* exist.
+    #
+    if [[ -n $PRESHARED_KEYFILE ]]; then
+        add_file $PRESHARED_KEYFILE
+    fi
+
     add_file /etc/wireguard/initcpio/unlock
 
     add_runscript
 }
 
 help() {
-    cat <<HELPME
-This hook provides basic Wireguard support to assist in the remote unlocking
-of encrypted partitions. There are various parameters that are to be
-configured via the "/etc/wireguard/initcpio/unlock" file. This must be done!
+    cat <<HELPEOF
+This hook provides basic WireGuard support to assist in the remote unlocking
+of encrypted partitions via ssh. There are various parameters that are to be
+configured in the "/etc/wireguard/initcpio/unlock" file. This *MUST* be done!
 
 In addition to this hook, you will require something like tinyssh or dropbear
 appropriately configured in order to gain remote access. Please refer to the
 README.adoc AND the Arch Wiki for further details with regards to remote
-unlocking of encrypted partitions.
-HELPME
+unlocking of encrypted partitions. Thank you.
+HELPEOF
 }
 
 # vim:set syntax=sh tw=78:

@@ -1,10 +1,8 @@
 #!/bin/bash
 
-_fatal () { echo ":: wireguard [FATAL]: ${@}. Cannot initialise Wireguard!"; break=y; }
+_fatal () { echo ":: WireGuard [FATAL]: ${@}. Cannot initialise WireGuard!"; break=y; }
 
-if [ -s /etc/wireguard/initcpio/unlock ]; then
-    . /etc/wireguard/initcpio/unlock
-fi
+. /etc/wireguard/initcpio/unlock
 
 run_hook()
 {
@@ -43,18 +41,33 @@ run_hook()
         return 1
     fi
 
-    echo "Starting Wireguard."
-
+    echo "Adding WireGuard interface '$INTERFACE'."
     ip link add dev $INTERFACE type wireguard
-    wg set $INTERFACE \
-        private-key $PRIVATE_KEYFILE \
-        peer $PEER_PUBLIC_KEY \
-        endpoint $PEER_ENDPOINT \
-        persistent-keepalive $PERSISTENT_KEEPALIVES \
-        allowed-ips $ALLOWED_IPS
+
+    if [ -z $PRESHARED_KEYFILE ]; then
+        echo "Starting WireGuard."
+        wg set $INTERFACE \
+            private-key $PRIVATE_KEYFILE \
+            peer $PEER_PUBLIC_KEY \
+            endpoint $PEER_ENDPOINT \
+            persistent-keepalive $PERSISTENT_KEEPALIVES \
+            allowed-ips $ALLOWED_IPS
+    else
+        echo "Starting WireGuard *WITH* a preshared key."
+        wg set $INTERFACE \
+            private-key $PRIVATE_KEYFILE \
+            peer $PEER_PUBLIC_KEY \
+            preshared-key $PRESHARED_KEYFILE \
+            endpoint $PEER_ENDPOINT \
+            persistent-keepalive $PERSISTENT_KEEPALIVES \
+            allowed-ips $ALLOWED_IPS
+    fi
+
     ip addr add $INTERFACE_ADDR dev $INTERFACE
     ip link set $INTERFACE up
     ip route add $ALLOWED_IPS dev $INTERFACE
+
+    echo "WireGuard interface '$INTERFACE' has been added and configured."
 }
 
 run_cleanuphook() {
