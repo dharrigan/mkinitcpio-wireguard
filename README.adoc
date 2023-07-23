@@ -46,9 +46,9 @@ LEAST A 1.0.0 RELEASE*
 
 | *0.5.11*
 a|
-* Added in support for using WireGuard a preshared key (closes #4).
-* Improved the documentation.
-* Improved the initcpio support files.
+* Added in support for using a WireGuard preshared key (closes #4).
+* Documentation improvements.
+* Improved initcpio support files.
 * Change versioning to be MAJOR.MINOR.COMMITS.
 
 | *0.4.10*
